@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp classes:resources StanfordCoreNlpDemo
+java -cp resources:classes Main
