@@ -1,0 +1,2 @@
+#!/bin/sh
+javac -cp resources:src src/StanfordCoreNlpDemo.java -d ./classes/
