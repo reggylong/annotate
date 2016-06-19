@@ -15,17 +15,18 @@ import javax.json.*;
 
 public class Main {
 
-  private static List<Annotation> annotations = new ArrayList<>();
   private static StanfordCoreNLP pipeline;
   private static final String input = "release/crawl";
+  private static BufferedReader in;
 
   public static void main(String[] args) throws IOException {
 
-    //initPipeline();
-    loadUtterances(input);
+    initPipeline();
+    openInput(input);
     System.out.println("Finished loading input:" + input);
     System.out.println("Processing annotations...");
     processAnnotations();
+    System.out.println("Finished processing annotations");
   }
 
   private static void initPipeline() {
@@ -34,54 +35,61 @@ public class Main {
     pipeline = new StanfordCoreNLP(props);
   }
 
-  private static void loadUtterances(String filename) {
-
-    BufferedReader in = null;
+  private static void openInput(String filename) {
     try {
       in = new BufferedReader(new FileReader(filename));
     } catch (FileNotFoundException e) {
       System.err.println(e.getMessage());
       System.exit(1);
     }
-
-    for (int i = 0; i < 10; i++) {
-      String line = null;
-      try {
-        line = in.readLine();
-      } catch (IOException e) { 
-        System.err.println(e.getMessage());
-        continue;
-      }
-      JsonReader reader = Json.createReader(new StringReader(line));
-      JsonObject object = reader.readObject();
-
-      String date = object.getJsonString("date").getString();
-      String title = object.getJsonString("title").getString();
-      String url = object.getJsonString("url").getString();
-      String text = object.getJsonString("text").getString();
-      int id = object.getInt("articleId");
-      System.out.println(id);
-      reader.close();
-    }
-    System.exit(0);
   }
 
+  private static JsonObject read() {
+    String line = null;
+    try {
+      line = in.readLine();
+    } catch (IOException e) {
+      System.err.println(e.getMessage());
+      return null;
+    }
+    if (line == null) return null;
+    JsonReader reader = Json.createReader(new StringReader(line));
+    JsonObject object = reader.readObject();
+    reader.close();
+    return object;
+  }
+
+  /*
+  String date = object.getJsonString("date").getString();
+  String title = object.getJsonString("title").getString();
+  String url = object.getJsonString("url").getString();
+  String text = object.getJsonString("text").getString();
+  int id = object.getInt("articleId");*/
+
   private static void processAnnotations() {
+    JsonObject obj = null;
     PrintWriter xmlOut = null;
     try {
-      xmlOut = new PrintWriter("output");
-    } catch (Exception e) {}
-    // Initialize an Annotation with some text to be annotated. The text is the argument to the constructor.
-    Annotation annotation;
-    annotation = new Annotation("Kosgi Santosh sent an email to Stanford University. He didn't get a reply.");
-
-    // run all the selected Annotators on this text
-    pipeline.annotate(annotation);
-
-    try {
-      pipeline.xmlPrint(annotation, xmlOut);
-    } catch (Exception e) {}
+      xmlOut = new PrintWriter("output.xml");
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
+      System.exit(1);
+    }
+    while ( (obj = read()) != null) {
+      Annotation annotation = null;
+      try {
+        annotation = new Annotation(obj.getJsonString("text").getString());
+      } catch (Exception e) {
+        System.err.println(e.getMessage());
+        System.err.println(obj);
+        continue;
+      }
+      pipeline.annotate(annotation);
+      try {
+        pipeline.xmlPrint(annotation, xmlOut);  
+      } catch (Exception e) {}
+      xmlOut.println();
+    }
     IOUtils.closeIgnoringExceptions(xmlOut);
-
   }
 }
