@@ -75,7 +75,10 @@ public class Main {
       System.err.println(e.getMessage());
       System.exit(1);
     }
+    int count = 0;
     while ( (obj = read()) != null) {
+      count++;
+      System.out.println("Read " + count + " utterances");
       Annotation annotation = null;
       try {
         annotation = new Annotation(obj.getJsonString("text").getString());
