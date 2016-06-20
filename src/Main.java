@@ -14,6 +14,7 @@ import edu.stanford.nlp.util.*;
 import javax.json.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
+import java.lang.*;
 
 public class Main {
 
@@ -27,13 +28,19 @@ public class Main {
     System.out.println("Determining size of dataset");
     int count = countLines(input);
     int remaining = count;
-
+    System.out.println("Distributing inputs");
+    distributeInputs(count);
     System.out.println("Processing annotations...");
     System.out.println("Finished processing annotations");
   }
 
-  private static void exit(Exception e) {
+  public static void printError(Exception e) {
     System.err.println(e.getMessage());
+    e.printStackTrace();
+  }
+
+  public static void exit(Exception e) {
+    printError(e);
     System.err.println("Exiting...");
     System.exit(1);
   }
@@ -46,31 +53,34 @@ public class Main {
     } catch (IOException e) {
       exit(e);
     }
+    File dir = new File("inputs");
+    dir.mkdir();
     for (int i = 0; i < nWorkers; i++) {
       PrintWriter w = null;
       try {
-        w = new PrintWriter(i + ".in");
+        w = new PrintWriter("inputs/" + i + ".in");
       } catch (Exception e) { exit(e); }
 
       for (int j = 0; j < total / nWorkers; j++) {
         try {
           w.println(in.readLine());
-        } catch (IOException e) {System.err.println(e.getMessage());}
+        } catch (IOException e) { printError(e); }
       }
       String line = null;
       if (i == nWorkers - 1) {
         while (true) {
           try {
             line = in.readLine();
-          } catch (IOException e) {System.err.println(e.getMessage());}
-          if (line != null) w.println(line);
+          } catch (IOException e) { printError(e); }
+          if (line == null) break;
+          w.println(line);
         }
       }
       w.close();
     }
     try {
       in.close();
-    } catch (IOException e) {}
+    } catch (IOException e) { printError(e); }
   }
 
   private static Integer countLines(String filename) {
@@ -110,7 +120,7 @@ public class Main {
     try {
       line = in.readLine();
     } catch (IOException e) {
-      System.err.println(e.getMessage());
+      printError(e);
       return null;
     }
     if (line == null) return null;
@@ -177,13 +187,13 @@ class Handler implements Runnable {
     try {
       pipeline = pipelines.take();
     } catch (InterruptedException e) {
-      System.err.println(e.getMessage());
+      Main.printError(e);
       return;
     }
     try {
       annotation = new Annotation(obj.getJsonString("text").getString());
     } catch (Exception e) {
-      System.err.println(e.getMessage());
+      Main.printError(e);
       System.err.println(obj);
       return;
     }
