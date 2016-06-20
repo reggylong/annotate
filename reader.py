@@ -7,9 +7,9 @@ import random
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input', default="output.xml")
+parser.add_argument('--input', default="annotations.xml")
 parser.add_argument('--output_dir', default="output")
-parser.add_argument('--ids', default= "1 2 3 4 5 6 7 8 9 10")
+parser.add_argument('--n', default=10)
 args = parser.parse_args()
 
 if not os.path.exists(args.output_dir):
@@ -17,8 +17,14 @@ if not os.path.exists(args.output_dir):
 
 f = open(args.input, 'r')
 os.chdir(os.getcwd() + "/" + args.output_dir)
-ids = [int(i) for i in args.ids.split()]
-ids.sort()
-
+i = 0
+for i in xrange(int(args.n)):
+  id = int(f.readline().strip())
+  g = open(str(id) + ".xml", 'w')
+  while True:
+    line = f.readline()
+    if len(line.strip()) == 0: break
+    g.write(line)
+  g.close()
 
 f.close()

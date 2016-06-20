@@ -92,7 +92,12 @@ public class Main {
       if (count % 10000 == 0) System.out.println("Scheduled " + count + " utterances");
     }
     pool.shutdown();
-    boolean done = executorService(1, TimeUnit.DAYS);
+    try {
+      boolean done = pool.awaitTermination(1, TimeUnit.DAYS);
+    } catch (Exception e) {
+      System.err.println(e.getMessage());
+      System.err.println("pool.awaitTermination failed");
+    }
     IOUtils.closeIgnoringExceptions(xmlOut);
   }
 }
