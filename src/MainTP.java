@@ -20,88 +20,34 @@ public class Main {
   private static final String input = "release/crawl";
   private static final String output = "annotations.xml";
   private static BufferedReader in;
-  private static final int nWorkers = 28;
+  private static final int poolSize = 32;
+  private static ExecutorService pool = Executors.newFixedThreadPool(poolSize);
+  private static BlockingQueue<StanfordCoreNLP> pipelines = new LinkedBlockingQueue<>();
 
   public static void main(String[] args) throws IOException {
 
-    System.out.println("Determining size of dataset");
-    int count = countLines(input);
-    int remaining = count;
-
+    initPipelines();
+    openInput(input);
+    System.out.println("Finished loading input:" + input);
     System.out.println("Processing annotations...");
+    processAnnotations();
     System.out.println("Finished processing annotations");
   }
 
-  private static void exit(Exception e) {
-    System.err.println(e.getMessage());
-    System.err.println("Exiting...");
-    System.exit(1);
-  }
-
-  private static void distributeInputs(int total) {
-    int remaining = total;
-    BufferedReader in = null;
-    try {
-      in = new BufferedReader(new FileReader(input));
-    } catch (IOException e) {
-      exit(e);
-    }
-    for (int i = 0; i < nWorkers; i++) {
-      PrintWriter w = null;
-      try {
-        w = new PrintWriter(i + ".in");
-      } catch (Exception e) { exit(e); }
-
-      for (int j = 0; j < total / nWorkers; j++) {
-        try {
-          w.println(in.readLine());
-        } catch (IOException e) {System.err.println(e.getMessage());}
-      }
-      String line = null;
-      if (i == nWorkers - 1) {
-        while (true) {
-          try {
-            line = in.readLine();
-          } catch (IOException e) {System.err.println(e.getMessage());}
-          if (line != null) w.println(line);
-        }
-      }
-      w.close();
-    }
-    try {
-      in.close();
-    } catch (IOException e) {}
-  }
-
-  private static Integer countLines(String filename) {
-    Process p = null;
-    try {
-      p = Runtime.getRuntime().exec("wc -l " + input);
-      p.waitFor();
-      BufferedReader reader = new BufferedReader(
-                                new InputStreamReader(p.getInputStream()));
-      String line = reader.readLine();
-      return Integer.parseInt(line.split("\\s+")[0]);
-    } catch (IOException e) {
-      exit(e);
-    } catch (InterruptedException e) {
-      exit(e);
-    }
-    // why java
-    return null;
-  }
-
-  private static StanfordCoreNLP initPipelines() {
+  private static void initPipelines() {
     Properties props = new Properties();
     props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner");
-    return new StanfordCoreNLP(props);
+    for (int i = 0; i < poolSize; i++) {
+      pipelines.add(new StanfordCoreNLP(props));
+    }
   }
 
   private static void openInput(String filename) {
     try {
       in = new BufferedReader(new FileReader(filename));
     } catch (FileNotFoundException e) {
-      exit(e);
+      System.err.println(e.getMessage());
+      System.exit(1);
     }
   }
 
@@ -128,7 +74,6 @@ public class Main {
   int id = object.getInt("articleId");*/
 
   private static void processAnnotations() {
-    /*
     JsonObject obj = null;
     PrintWriter xmlOut = null;
     try {
@@ -153,7 +98,7 @@ public class Main {
       System.err.println(e.getMessage());
       System.err.println("pool.awaitTermination failed");
     }
-    IOUtils.closeIgnoringExceptions(xmlOut); */
+    IOUtils.closeIgnoringExceptions(xmlOut);
   }
 }
 
