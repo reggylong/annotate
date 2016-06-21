@@ -22,14 +22,14 @@ public class Main {
   public static final String workerInput = "inputs";
   public static final String workerOutput = "outputs";
   private static final String output = "annotations.xml";
-  private static final int nWorkers = 16;
+  private static final int nWorkers = 24;
+  public static final int timeout = 60;
 
   public static void main(String[] args) throws IOException {
 
     if (!isCached()) {
       System.out.println("Determining size of dataset");
       int count = countLines(input);
-      int remaining = count;
       System.out.println("Distributing inputs");
       distributeInputs(count);
     } else {
@@ -73,7 +73,6 @@ public class Main {
   }
 
   private static void distributeInputs(int total) {
-    int remaining = total;
     BufferedReader in = null;
     try {
       in = new BufferedReader(new FileReader(input));
@@ -113,7 +112,7 @@ public class Main {
   public static Integer countLines(String filename) {
     Process p = null;
     try {
-      p = Runtime.getRuntime().exec("wc -l " + input);
+      p = Runtime.getRuntime().exec("wc -l " + filename);
       p.waitFor();
       BufferedReader reader = new BufferedReader(
                                 new InputStreamReader(p.getInputStream()));
@@ -171,12 +170,12 @@ class Handler implements Runnable {
 
   private static StanfordCoreNLP initPipeline() {
     Properties props = new Properties();
-    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner");
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
     return new StanfordCoreNLP(props);
   }
 
   private void initOut() {
-    String output = id + ".xml";
+    String output = id + ".out";
     try {
       xmlOut = new PrintWriter(Main.workerOutput + "/" + output);
     } catch (IOException e) {
@@ -211,17 +210,34 @@ class Handler implements Runnable {
   }
 
   public void run() { 
+    ExecutorService executor = Executors.newFixedThreadPool(1);
     JsonObject obj = null;
+    long startTime = System.nanoTime();
     while ( (obj = read()) != null) {
+      remainingLines--;
+      if (remainingLines % 100 == 0) {
+        long diffTime = System.nanoTime() - startTime;
+        synchronized (System.out) {
+          System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) + 
+              " mins elapsed]" + "Worker " + id + ": " 
+              + remainingLines + " examples left");
+        }
+      }
 
       Annotation annotation = null;
+      if (obj.getJsonString("text") == null) continue;
+      annotation = new Annotation(obj.getJsonString("text").getString());
+
+      Future<Boolean> future = executor.submit(new Annotator(pipeline, annotation));
       try {
-        annotation = new Annotation(obj.getJsonString("text").getString());
+        boolean success = future.get(Main.timeout, TimeUnit.SECONDS);
+        if (!success) continue;
       } catch (Exception e) {
-        Main.printError(e);
-        System.err.println(obj);
+        if (!future.isCancelled() && !future.isDone()) {
+          future.cancel(true);
+        }
+        continue;
       }
-      pipeline.annotate(annotation);
       try {
         xmlOut.println(obj.getInt("articleId"));
         pipeline.xmlPrint(annotation, xmlOut);  
@@ -229,14 +245,29 @@ class Handler implements Runnable {
       } catch (Exception e) {
         Main.printError(e);
       }
-      remainingLines--;
-      if (remainingLines % 500 == 0) {
-        synchronized (System.out) {
-          System.out.println("Worker " + id + ": " 
-              + remainingLines + " examples left");
-        }
-      }
+      
     }
     IOUtils.closeIgnoringExceptions(xmlOut);
+  }
+}
+
+class Annotator implements Callable<Boolean> {
+
+  private StanfordCoreNLP pipeline;
+  private Annotation annotation;
+
+  Annotator(StanfordCoreNLP pipeline, Annotation annotation) {
+    this.pipeline = pipeline;
+    this.annotation = annotation;
+  }
+
+  public Boolean call() {
+    try {
+      pipeline.annotate(annotation);
+    } catch (Exception e) {
+      Main.printError(e);
+      return false;
+    }
+    return true;
   }
 }
