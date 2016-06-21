@@ -1,2 +1,2 @@
 #!/bin/sh
-java -cp resources:classes Main
+java -cp resources:classes -Xmx80g Main 

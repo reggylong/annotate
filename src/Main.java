@@ -18,18 +18,17 @@ import java.lang.*;
 
 public class Main {
 
-  private static final String input = "release/crawl";
+  public static final String input = "release/crawl";
   public static final String workerInput = "inputs";
   public static final String workerOutput = "outputs";
-  private static final String output = "annotations.xml";
-  private static final int nWorkers = 24;
+  public static final int nWorkers = 24;
   public static final int timeout = 60;
 
   public static void main(String[] args) throws IOException {
 
     if (!isCached()) {
       System.out.println("Determining size of dataset");
-      int count = countLines(input);
+      int count = Utils.countLines(input);
       System.out.println("Distributing inputs");
       distributeInputs(count);
     } else {
@@ -38,17 +37,6 @@ public class Main {
     System.out.println("Processing annotations...");
     processAnnotations();
     System.out.println("Finished processing annotations");
-  }
-
-  public static void printError(Exception e) {
-    System.err.println(e.getMessage());
-    e.printStackTrace();
-  }
-
-  public static void exit(Exception e) {
-    printError(e);
-    System.err.println("Exiting...");
-    System.exit(1);
   }
 
   private static boolean isCached() {
@@ -77,7 +65,7 @@ public class Main {
     try {
       in = new BufferedReader(new FileReader(input));
     } catch (IOException e) {
-      exit(e);
+      Utils.exit(e);
     }
     File dir = new File("inputs");
     dir.mkdir();
@@ -85,19 +73,19 @@ public class Main {
       PrintWriter w = null;
       try {
         w = new PrintWriter("inputs/" + i + ".in");
-      } catch (Exception e) { exit(e); }
+      } catch (Exception e) { Utils.exit(e); }
 
       for (int j = 0; j < total / nWorkers; j++) {
         try {
           w.println(in.readLine());
-        } catch (IOException e) { printError(e); }
+        } catch (IOException e) { Utils.printError(e); }
       }
       String line = null;
       if (i == nWorkers - 1) {
         while (true) {
           try {
             line = in.readLine();
-          } catch (IOException e) { printError(e); }
+          } catch (IOException e) { Utils.printError(e); }
           if (line == null) break;
           w.println(line);
         }
@@ -106,25 +94,7 @@ public class Main {
     }
     try {
       in.close();
-    } catch (IOException e) { printError(e); }
-  }
-
-  public static Integer countLines(String filename) {
-    Process p = null;
-    try {
-      p = Runtime.getRuntime().exec("wc -l " + filename);
-      p.waitFor();
-      BufferedReader reader = new BufferedReader(
-                                new InputStreamReader(p.getInputStream()));
-      String line = reader.readLine();
-      return Integer.parseInt(line.split("\\s+")[0]);
-    } catch (IOException e) {
-      exit(e);
-    } catch (InterruptedException e) {
-      exit(e);
-    }
-    // why java
-    return null;
+    } catch (IOException e) { Utils.printError(e); }
   }
 
   /*
@@ -149,7 +119,7 @@ public class Main {
     for (int i = 0; i < nWorkers; i++) {
       try {
       threads[i].join();
-      } catch (InterruptedException e) { Main.printError(e); }
+      } catch (InterruptedException e) { Utils.printError(e); }
     }
   }
 }
@@ -189,9 +159,9 @@ class Handler implements Runnable {
     try {
       in = new BufferedReader(new FileReader(Main.workerInput + "/" + input));
     } catch (IOException e) {
-      Main.exit(e);
+      Utils.exit(e);
     }
-    remainingLines = Main.countLines(Main.workerInput + "/" + input);
+    remainingLines = Utils.countLines(Main.workerInput + "/" + input);
   }
 
   private JsonObject read() {
@@ -199,7 +169,7 @@ class Handler implements Runnable {
     try {
       line = in.readLine();
     } catch (IOException e) {
-      Main.printError(e);
+      Utils.printError(e);
       return null;
     }
     if (line == null) return null;
@@ -243,7 +213,7 @@ class Handler implements Runnable {
         pipeline.xmlPrint(annotation, xmlOut);  
         xmlOut.println();
       } catch (Exception e) {
-        Main.printError(e);
+        Utils.printError(e);
       }
       
     }
@@ -265,7 +235,7 @@ class Annotator implements Callable<Boolean> {
     try {
       pipeline.annotate(annotation);
     } catch (Exception e) {
-      Main.printError(e);
+      Utils.printError(e);
       return false;
     }
     return true;
