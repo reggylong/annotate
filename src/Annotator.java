@@ -14,96 +14,30 @@ import edu.stanford.nlp.util.*;
 import javax.json.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
+import java.util.concurrent.atomic.*;
 import java.lang.*;
 
 class Annotator implements Runnable {
-  private final int id;
-  private PrintWriter xmlOut;
   private StanfordCoreNLP pipeline;
-  private BufferedReader in;
-  private int remainingLines;
-
-  Handler(int id) { 
-    this.id = id;
-    pipeline = initPipeline();
-    initOut();
-    initIn();
-  }
-
-  private JsonObject read() {
-    String line = null;
-    try {
-      line = in.readLine();
-    } catch (IOException e) {
-      Utils.printError(e);
-      return null;
-    }
-    if (line == null) return null;
-    JsonReader reader = Json.createReader(new StringReader(line));
-    JsonObject object = reader.readObject();
-    reader.close();
-    return object;
-  }
-
-  public void run() { 
-    ExecutorService executor = Executors.newFixedThreadPool(1);
-    JsonObject obj = null;
-    long startTime = System.nanoTime();
-    while ( (obj = read()) != null) {
-      remainingLines--;
-      if (remainingLines % 100 == 0) {
-        long diffTime = System.nanoTime() - startTime;
-        synchronized (System.out) {
-          System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) + 
-              " mins elapsed]" + "Worker " + id + ": " 
-              + remainingLines + " examples left");
-        }
-      }
-
-      Annotation annotation = null;
-      if (obj.getJsonString("text") == null) continue;
-      annotation = new Annotation(obj.getJsonString("text").getString());
-
-      Future<Boolean> future = executor.submit(new Annotator(pipeline, annotation));
-      try {
-        boolean success = future.get(Main.timeout, TimeUnit.SECONDS);
-        if (!success) continue;
-      } catch (Exception e) {
-        if (!future.isCancelled() && !future.isDone()) {
-          future.cancel(true);
-        }
-        continue;
-      }
-      try {
-        xmlOut.println(obj.getInt("articleId"));
-        pipeline.xmlPrint(annotation, xmlOut);  
-        xmlOut.println();
-      } catch (Exception e) {
-        Utils.printError(e);
-      }
-      
-    }
-    IOUtils.closeIgnoringExceptions(xmlOut);
-  }
-}
-
-class Annotator implements Callable<Boolean> {
-
-  private StanfordCoreNLP pipeline;
+  private AtomicInteger count;
   private Annotation annotation;
+  private BlockingQueue<Annotation> annotations;
 
-  Annotator(StanfordCoreNLP pipeline, Annotation annotation) {
-    this.pipeline = pipeline;
+  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Annotation> annotations, Annotation annotation, AtomicInteger count) {
+    this.count = count;
     this.annotation = annotation;
+    // Used to feed input to AnnotationWriter
+    this.annotations = annotations;
+    this.pipeline = pipeline;
   }
-
-  public Boolean call() {
+  
+  public void run() {
     try {
       pipeline.annotate(annotation);
+      annotations.put(annotation);
     } catch (Exception e) {
       Utils.printError(e);
-      return false;
     }
-    return true;
+    count.getAndIncrement();
   }
 }

@@ -1,2 +1,8 @@
 #!/bin/sh
-java -cp resources:classes -Xmx80g Main 
+
+array=(john0 john1 john3 john4 john5 john6 john10 john11)
+
+for i in "${!array[@]}"; do
+  ssh "${array[$i]}" './entities/execute $i'
+done
+

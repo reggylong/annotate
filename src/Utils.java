@@ -39,20 +39,20 @@ public class Utils {
     return group + "-" + id;
   }
 
-  public static BufferedReader initIn(int group, int id) {
-    String input = key(group, id) + ".in";
+  public static BufferedReader initIn(String inputPath, int group) {
+    String name = group + ".in";
     try {
-      return new BufferedReader(new FileReader(Main.workerInput + "/" + input));
+      return new BufferedReader(new FileReader(inputPath + "/" + name));
     } catch (IOException e) {
       exit(e);
     }
     return null;
   }
 
-  private static PrintWriter initOut(int group, int id) {
-    String output = key(group, id) + ".out";
+  public static PrintWriter initOut(String outputPath, int group) {
+    String output = group + ".out";
     try {
-      return new PrintWriter(Main.workerOutput + "/" + output);
+      return new PrintWriter(outputPath + "/" + output);
     } catch (IOException e) {
       System.err.println(e.getMessage());
       System.exit(1);
@@ -60,19 +60,75 @@ public class Utils {
     return null;
   }
 
-  public static boolean isCached(int group) {
-    File dir = new File(Main.workerInput);
+  public static boolean isCached(String inputPath, int nGroups) {
+    File dir = new File(inputPath);
     boolean cached = true;
     if (!dir.exists()) return false;
-    for (int i = 0; i < Main.nWorkers; i++) {
-      System.out.println("Checking " + Main.workerInput + "/" + key(group, i) + ".in");
-      File f = new File(Main.workerInput + "/" + key(group,i) + ".in");
+    for (int i = 0; i < nGroups; i++) {
+      System.out.println("Checking " + inputPath + "/" + i + ".in");
+      File f = new File(inputPath + "/" + i + ".in");
       if (!f.exists()) {
+        System.out.println("Missing file " + inputPath + "/" + i + ".in");
         cached = false;
         break;
       }
     }
+    if (new File(inputPath).list().length != nGroups) cached = false;
+    if (!cached) for (File file : dir.listFiles()) file.delete();
+
     return cached;
+  }
+
+  public static void distributeInputs(String datasetPath, String workerInput, int total, int nGroups) {
+    BufferedReader in = null;
+    try {
+      in = new BufferedReader(new FileReader(datasetPath));
+    } catch (IOException e) {
+      Utils.exit(e);
+    }
+    File dir = new File(workerInput);
+    dir.mkdir();
+    for (int i = 0; i < nGroups; i++) {
+      PrintWriter w = null;
+      try {
+        w = new PrintWriter("inputs/" + i + ".in");
+      } catch (Exception e) { Utils.exit(e); }
+
+      for (int j = 0; j < total / nGroups; j++) {
+        try {
+          w.println(in.readLine());
+        } catch (IOException e) { Utils.printError(e); }
+      }
+      String line = null;
+      if (i == nGroups - 1) {
+        while (true) {
+          try {
+            line = in.readLine();
+          } catch (IOException e) { Utils.printError(e); }
+          if (line == null) break;
+          w.println(line);
+        }
+      }
+      w.close();
+    }
+    try {
+      in.close();
+    } catch (IOException e) { Utils.printError(e); }
+  } 
+
+  public static JsonObject read(BufferedReader in) {
+    String line = null;
+    try {
+      line = in.readLine();
+    } catch (IOException e) {
+      Utils.printError(e);
+      return null;
+    }
+    if (line == null) return null;
+    JsonReader reader = Json.createReader(new StringReader(line));
+    JsonObject object = reader.readObject();
+    reader.close();
+    return object;
   }
 
   public static Integer countLines(String filename) {

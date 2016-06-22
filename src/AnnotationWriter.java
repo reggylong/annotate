@@ -20,62 +20,30 @@ class AnnotationWriter implements Runnable {
  
   private final StanfordCoreNLP pipeline;
   private final BlockingQueue<Annotation> annotations;
-  private final BlockingQueue<PrintWriter> writers;
-  private final int nWriters;
+  private final PrintWriter writer;
 
-  AnnotationWriter(BlockingQueue<Annotation> annotations, BlockingQueue<PrintWriter> writers, int nWriters) {
+  AnnotationWriter(BlockingQueue<Annotation> annotations, PrintWriter writer) {
     this.annotations = annotations; 
     this.pipeline = Utils.initPipeline();
-    this.writers = writers;
-    this.nWriters = nWriters;
+    this.writer = writer;
   }
 
   public void run() {
-    ExecutorService pool = Executors.newFixedThreadPool(nWriters);
     while (true) {
+      Annotation annotation = null;
       try {
-        Annotation annotation = annotations.take();
-        pool.submit(new SingleAnnotationHandler(pipeline, annotation, writers));
+        annotation = annotations.take();
       } catch (InterruptedException e) {
         Utils.printError(e);
-        pool.shutdown();
-        try {
-          pool.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {}
+        break;
+      }
+      try {
+        pipeline.xmlPrint(annotation, writer);
+      } catch (IOException e) {
+        Utils.printError(e);
       }
         
     }
   }
 }
 
-class SingleAnnotationHandler implements Runnable {
-
-  private final StanfordCoreNLP pipeline;
-  private final Annotation annotation;
-  private final BlockingQueue<PrintWriter> writers;
-
-  SingleAnnotationHandler(StanfordCoreNLP pipeline, Annotation annotation, BlockingQueue<PrintWriter> writers) {
-    this.pipeline = pipeline;
-    this.annotation = annotation;
-    this.writers = writers;
-  }
-
-  public void run() {
-    PrintWriter w = null;
-    try {
-      w = writers.take();
-      pipeline.jsonPrint(annotation, w);
-    } catch (InterruptedException e) { 
-      Utils.printError(e); 
-    } catch (IOException e) {
-      Utils.printError(e);
-    }
-    if (w == null) return;
-    try {
-      writers.put(w);
-    } catch (InterruptedException e) { 
-      Utils.printError(e);
-      writers.offer(w); 
-    }
-  }
-}

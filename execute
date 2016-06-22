@@ -1,0 +1,3 @@
+#!/bin/sh
+
+java -cp resources:classes Main $1 2>stderr_$1 1>stdout_$1
