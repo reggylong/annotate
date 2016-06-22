@@ -1,7 +1,7 @@
 #!/bin/sh
 
-array=(john0 john1 john3 john4 john5 john6 john10 john11)
-comm="java -cp resources:classes Main"
+array=(john0 john1 john2 john5 john6 john7 john10 john11)
+comm="java -XX:-OmitStackTraceInFastThrow -cp resources:classes Main"
 
 for i in "${!array[@]}"; do
   echo 'cd entities;'"java -cp resources:classes Main $i"

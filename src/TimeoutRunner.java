@@ -33,7 +33,11 @@ class TimeoutRunner implements Runnable {
       System.err.println("Thread: " + runner + " threw an exception");
       endTask(future);
     } catch (TimeoutException e) {
-      System.err.println("Thread: " + runner + " timed out");
+      int nTimedOut = Main.timedOut.getAndIncrement();
+      if (nTimedOut % 10 == 0) {
+        System.out.println(nTimedOut + " executions have timed out"); 
+      }
+      System.err.println("Execution: " + runner + " timed out");
       endTask(future);
     }
   }
