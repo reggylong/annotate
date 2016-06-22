@@ -26,13 +26,17 @@ public class Main {
   public static final int nWorkers = 20;
   public static int group = 0;
   private static final AtomicInteger count = new AtomicInteger(0);
-  public static int timeout = 120;
+  public static int timeout = 60;
+  public static long startTime; 
 
 
   public static void main(String[] args) throws IOException {
+    startTime = System.nanoTime();
     if (args.length > 0) {
       group = Integer.parseInt(args[0]);
     }
+    redirect(); 
+
     System.out.println("Determining size of dataset");
     int lines = Utils.countLines(dataset);
 
@@ -45,6 +49,21 @@ public class Main {
     System.out.println("Processing annotations...");
     processAnnotations(group);
     System.out.println("Finished processing annotations");
+  }
+
+  private static void redirect() {
+    String logPath = "logs";
+    File dir = new File(logPath);
+    dir.mkdir();
+
+    try {
+      PrintStream out = new PrintStream(new FileOutputStream(logPath + "/" + group + ".out"));
+      PrintStream err = new PrintStream(new FileOutputStream(logPath + "/" + group + ".err"));
+      System.setOut(out);
+      System.setErr(err);
+    } catch (FileNotFoundException e) {
+      Utils.exit(e);
+    }
   }
 
   /*
@@ -72,30 +91,22 @@ public class Main {
     StanfordCoreNLP pipeline = Utils.initPipeline(); 
 
     JsonObject obj = null;
-    long startTime = System.nanoTime();
-    int prevCompleted = 0;
-    int completed = count.get();
     while ( (obj = Utils.read(in)) != null) {
       Annotation annotation = null;
       if (obj.getJsonString("text") == null) continue;
       annotation = new Annotation(obj.getJsonString("text").getString());
       Runnable runner = new Annotator(pipeline, annotations, annotation, count);
       scheduler.submit(new TimeoutRunner(pool, runner, timeout));
-
-      prevCompleted = completed; 
-      completed = count.get();
-      if (completed % 100 == 0 && completed != prevCompleted) {
-        long diffTime = System.nanoTime() - startTime;
-        System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) + 
-            " min(s) elapsed]" +
-            + completed + " completed");
-      }
     }
 
-    pool.shutdown(); 
     scheduler.shutdown();
     try {
-      pool.awaitTermination(7, TimeUnit.DAYS); 
+      scheduler.awaitTermination(7, TimeUnit.DAYS); 
+    } catch (InterruptedException e) {}
+
+    pool.shutdown(); 
+    try {
+      scheduler.awaitTermination(7, TimeUnit.DAYS); 
     } catch (InterruptedException e) {}
 
     writer.interrupt();

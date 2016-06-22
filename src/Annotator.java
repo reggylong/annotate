@@ -30,14 +30,21 @@ class Annotator implements Runnable {
     this.annotations = annotations;
     this.pipeline = pipeline;
   }
-  
+
   public void run() {
     try {
       pipeline.annotate(annotation);
       annotations.put(annotation);
+
     } catch (Exception e) {
       Utils.printError(e);
     }
-    count.getAndIncrement();
+    int completed = count.getAndIncrement();
+    if (completed % 10 == 0) {
+      long diffTime = System.nanoTime() - Main.startTime;
+      System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) +
+          " min(s) elapsed]" +
+          + completed + " completed");
+    }
   }
 }

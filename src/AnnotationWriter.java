@@ -35,7 +35,6 @@ class AnnotationWriter implements Runnable {
         annotation = annotations.take();
       } catch (InterruptedException e) {
         Utils.printError(e);
-        break;
       }
       try {
         pipeline.xmlPrint(annotation, writer);

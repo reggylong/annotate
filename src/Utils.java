@@ -148,4 +148,21 @@ public class Utils {
     return null;
   }
 
+  public static String hostname() {
+    Process p = null;
+    try {
+      p = Runtime.getRuntime().exec("hostname");
+      p.waitFor();
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(p.getInputStream()));
+      String line = reader.readLine();
+      return line.split("\\.")[0];
+    } catch (IOException e) {
+      exit(e);
+    } catch (InterruptedException e) {
+      exit(e);
+    }
+    return null;
+
+  }
 }
