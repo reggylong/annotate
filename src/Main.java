@@ -93,10 +93,7 @@ public class Main {
 
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
-      Annotation annotation = null;
-      if (obj.getJsonString("text") == null) continue;
-      annotation = new Annotation(obj.getJsonString("text").getString());
-      Runnable runner = new Annotator(pipeline, annotations, annotation);
+      Runnable runner = new Annotator(pipeline, annotations, obj);
       scheduler.submit(new TimeoutRunner(pool, runner, timeout));
     }
 

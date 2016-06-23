@@ -19,23 +19,28 @@ import java.lang.*;
 
 class Annotator implements Runnable {
   private StanfordCoreNLP pipeline;
-  private Annotation annotation;
+  private JsonObject obj;
   private BlockingQueue<Annotation> annotations;
 
-  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Annotation> annotations, Annotation annotation) {
-    this.annotation = annotation;
+  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Annotation> annotations, JsonObject obj) {
+    this.obj = obj;
     // Used to feed input to AnnotationWriter
     this.annotations = annotations;
     this.pipeline = pipeline;
   }
 
   public void run() {
-    try {
-      pipeline.annotate(annotation);
-      annotations.put(annotation);
+    Annotation annotation = null;
+    if (obj.getJsonString("text") != null && obj.getJsonString("date") != null) {
+      annotation = new Annotation(obj.getString("text"));
+      try {
+        pipeline.annotate(annotation);
+        annotations.put(annotation);
+      } catch (Exception e) {
+        Utils.printError(e);
+      }
+    } else {
 
-    } catch (Exception e) {
-      Utils.printError(e);
     }
     int examined = Main.count.incrementAndGet();
     if (examined % 10 == 0) {

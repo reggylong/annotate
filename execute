@@ -1,3 +1,3 @@
 #!/bin/sh
 
-java -cp resources:classes Main $1 > stdout_$1
+java -cp resources:classes Main $1
