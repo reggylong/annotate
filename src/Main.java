@@ -25,7 +25,8 @@ public class Main {
   public static int nGroups = 8;
   public static final int nWorkers = 20;
   public static int group = 0;
-  private static final AtomicInteger count = new AtomicInteger(0);
+  public static final AtomicInteger count = new AtomicInteger(0);
+  public static final AtomicInteger failed = new AtomicInteger(0);
   public static int timeout = 60;
   public static long startTime; 
 
@@ -60,7 +61,7 @@ public class Main {
       PrintStream out = new PrintStream(new FileOutputStream(logPath + "/" + group + ".out"));
       PrintStream err = new PrintStream(new FileOutputStream(logPath + "/" + group + ".err"));
       System.setOut(out);
-      System.setErr(err);
+      //System.setErr(err);
     } catch (FileNotFoundException e) {
       Utils.exit(e);
     }
@@ -95,7 +96,7 @@ public class Main {
       Annotation annotation = null;
       if (obj.getJsonString("text") == null) continue;
       annotation = new Annotation(obj.getJsonString("text").getString());
-      Runnable runner = new Annotator(pipeline, annotations, annotation, count);
+      Runnable runner = new Annotator(pipeline, annotations, annotation);
       scheduler.submit(new TimeoutRunner(pool, runner, timeout));
     }
 

@@ -19,12 +19,10 @@ import java.lang.*;
 
 class Annotator implements Runnable {
   private StanfordCoreNLP pipeline;
-  private AtomicInteger count;
   private Annotation annotation;
   private BlockingQueue<Annotation> annotations;
 
-  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Annotation> annotations, Annotation annotation, AtomicInteger count) {
-    this.count = count;
+  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Annotation> annotations, Annotation annotation) {
     this.annotation = annotation;
     // Used to feed input to AnnotationWriter
     this.annotations = annotations;
@@ -39,12 +37,12 @@ class Annotator implements Runnable {
     } catch (Exception e) {
       Utils.printError(e);
     }
-    int completed = count.getAndIncrement();
-    if (completed % 10 == 0) {
+    int examined = Main.count.incrementAndGet();
+    if (examined % 10 == 0) {
       long diffTime = System.nanoTime() - Main.startTime;
       System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) +
           " min(s) elapsed]" +
-          + completed + " completed");
+          + examined + " examined");
     }
   }
 }
