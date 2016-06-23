@@ -25,8 +25,7 @@ public class Main {
   public static int nGroups = 8;
   public static final int nWorkers = 20;
   public static int group = 0;
-  public static final AtomicInteger count = new AtomicInteger(0);
-  public static final AtomicInteger timedOut = new AtomicInteger(0);
+  private static final AtomicInteger count = new AtomicInteger(0);
   public static int timeout = 60;
   public static long startTime; 
 
@@ -84,7 +83,7 @@ public class Main {
 
     PrintWriter w = new PrintWriter(Utils.initOut(outputPath, group));
 
-    BlockingQueue<AnnotationWrapper> annotations = new LinkedBlockingQueue<AnnotationWrapper>();
+    BlockingQueue<Annotation> annotations = new LinkedBlockingQueue<Annotation>();
     Thread writer = new Thread(new AnnotationWriter(annotations, w));
     writer.start();
 
@@ -94,12 +93,9 @@ public class Main {
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
       Annotation annotation = null;
-      if (obj.getJsonString("text") == null || obj.getJsonString("date") == null) continue;
-      String text = obj.getString("text");
-      String date = obj.getString("date");
-      annotation = new Annotation(obj.getString("text"));
-      AnnotationWrapper wrapper = new AnnotationWrapper(annotation,date); 
-      Runnable runner = new Annotator(pipeline, annotations, wrapper);
+      if (obj.getJsonString("text") == null) continue;
+      annotation = new Annotation(obj.getJsonString("text").getString());
+      Runnable runner = new Annotator(pipeline, annotations, annotation, count);
       scheduler.submit(new TimeoutRunner(pool, runner, timeout));
     }
 
