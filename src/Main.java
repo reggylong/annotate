@@ -84,7 +84,7 @@ public class Main {
 
     PrintWriter w = new PrintWriter(Utils.initOut(outputPath, group));
 
-    BlockingQueue<Annotation> annotations = new LinkedBlockingQueue<Annotation>();
+    BlockingQueue<Pair<String, Annotation>> annotations = new LinkedBlockingQueue<>();
     Thread writer = new Thread(new AnnotationWriter(annotations, w));
     writer.start();
 

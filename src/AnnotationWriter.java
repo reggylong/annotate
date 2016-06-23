@@ -19,10 +19,10 @@ import edu.stanford.nlp.util.*;
 class AnnotationWriter implements Runnable {
  
   private final StanfordCoreNLP pipeline;
-  private final BlockingQueue<Annotation> annotations;
+  private final BlockingQueue<Pair<String, Annotation>> annotations;
   private final PrintWriter writer;
 
-  AnnotationWriter(BlockingQueue<Annotation> annotations, PrintWriter writer) {
+  AnnotationWriter(BlockingQueue<Pair<String,Annotation>> annotations, PrintWriter writer) {
     this.annotations = annotations; 
     this.pipeline = Utils.initPipeline();
     this.writer = writer;
@@ -30,14 +30,16 @@ class AnnotationWriter implements Runnable {
 
   public void run() {
     while (true) {
-      Annotation annotation = null;
+      Pair<String,Annotation> annotation = null;
       try {
         annotation = annotations.take();
       } catch (InterruptedException e) {
         Utils.printError(e);
       }
       try {
-        pipeline.xmlPrint(annotation, writer);
+        writer.println(annotation.first);
+        pipeline.xmlPrint(annotation.second, writer);
+        writer.println();
       } catch (IOException e) {
         Utils.printError(e);
       }

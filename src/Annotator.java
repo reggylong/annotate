@@ -20,9 +20,9 @@ import java.lang.*;
 class Annotator implements Runnable {
   private StanfordCoreNLP pipeline;
   private JsonObject obj;
-  private BlockingQueue<Annotation> annotations;
+  private BlockingQueue<Pair<String,Annotation>> annotations;
 
-  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Annotation> annotations, JsonObject obj) {
+  Annotator(StanfordCoreNLP pipeline, BlockingQueue<Pair<String,Annotation>> annotations, JsonObject obj) {
     this.obj = obj;
     // Used to feed input to AnnotationWriter
     this.annotations = annotations;
@@ -35,7 +35,7 @@ class Annotator implements Runnable {
       annotation = new Annotation(obj.getString("text"));
       try {
         pipeline.annotate(annotation);
-        annotations.put(annotation);
+        annotations.put(new Pair<>(obj.getString("date"),annotation));
       } catch (Exception e) {
         Utils.printError(e);
       }
