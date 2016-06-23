@@ -17,7 +17,7 @@ class TimeoutRunner implements Runnable {
     this.runner = runner;
     this.timeoutSeconds = timeoutSeconds;
   }
-  
+
   private void endTask(Future future) {
     future.cancel(true); 
   }
@@ -32,19 +32,30 @@ class TimeoutRunner implements Runnable {
     } catch (ExecutionException e) {
       int failed = Main.failed.incrementAndGet();
       System.err.println("Thread: " + runner + " threw an exception");
-      printFailed(failed);
+      Utils.printFailed(failed);
       endTask(future);
     } catch (TimeoutException e) {
       int failed = Main.failed.incrementAndGet();
       System.err.println("Thread: " + runner + " timed out");
-      printFailed(failed);
+      Utils.printFailed(failed);
       endTask(future);
     }
+    int examined = Main.count.incrementAndGet();
+    printExamined(examined);
   }
 
   private void printFailed(int failed) {
     if (failed % 10 == 0) {
       System.out.println(failed + " number of executions have failed.");
+    }
+  }
+
+  private void printExamined(int examined) {
+    if (examined % 10 == 0) {
+      long diffTime = System.nanoTime() - Main.startTime;
+      System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) +
+          " min(s) elapsed]" +
+          + examined + " examined");
     }
   }
 }

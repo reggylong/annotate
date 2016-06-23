@@ -20,7 +20,7 @@ public class Utils {
 
   public static StanfordCoreNLP initPipeline() {
     Properties props = new Properties();
-    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, depparse, mention, coref");
     return new StanfordCoreNLP(props);
   }
 
@@ -165,4 +165,11 @@ public class Utils {
     return null;
 
   }
+
+  public static void printFailed(int failed) {
+    if (failed % 10 == 0) {
+      System.out.println(failed + " number of executions have failed.");
+    }
+  }
+
 }
