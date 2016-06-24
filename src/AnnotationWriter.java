@@ -35,14 +35,15 @@ class AnnotationWriter implements Runnable {
         annotation = annotations.take();
       } catch (InterruptedException e) {
         Utils.printError(e);
+        continue;
       }
       try {
         writer.println(annotation.first);
-        pipeline.xmlPrint(annotation.second, writer);
-        writer.println();
+        pipeline.jsonPrint(annotation.second, writer);
       } catch (IOException e) {
         Utils.printError(e);
       }
+      writer.println();
         
     }
   }

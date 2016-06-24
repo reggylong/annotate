@@ -20,17 +20,15 @@ public class Utils {
 
   public static StanfordCoreNLP initPipeline() {
     Properties props = new Properties();
-    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, depparse, mention, coref");
-    props.setProperty("coref.mode", "statistical");
-    props.setProperty("coref.doClustering", "false");
-    props.setProperty("coref.md.type", "dependency");
-    
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, mention, dcoref, natlog, openie");
+    props.setProperty("openie.resolve_coref", "true");
+    props.setProperty("dcoref.maxdist", "5");
     return new StanfordCoreNLP(props);
   }
 
   public static StanfordCoreNLP initMiniPipeline() {
     Properties props = new Properties();
-    props.setProperty("annotators", "tokenize, ssplit, pos, lemma");
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner");
     return new StanfordCoreNLP(props);
   }
 

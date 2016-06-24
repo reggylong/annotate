@@ -35,7 +35,7 @@ class Annotator implements Runnable {
       annotation = new Annotation(obj.getString("text"));
       pipeline.annotate(annotation);
       try {
-        annotations.put(new Pair<>(obj.getString("date"),annotation));
+        annotations.put(new Pair<>(obj.getInt("articleId") + " " + obj.getString("date"),annotation));
       } catch (InterruptedException e) {
         int failed = Main.failed.incrementAndGet();
         Utils.printFailed(failed);
