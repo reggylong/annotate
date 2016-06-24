@@ -21,6 +21,16 @@ public class Utils {
   public static StanfordCoreNLP initPipeline() {
     Properties props = new Properties();
     props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, depparse, mention, coref");
+    props.setProperty("coref.mode", "statistical");
+    props.setProperty("coref.doClustering", "false");
+    props.setProperty("coref.md.type", "dependency");
+    
+    return new StanfordCoreNLP(props);
+  }
+
+  public static StanfordCoreNLP initMiniPipeline() {
+    Properties props = new Properties();
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma");
     return new StanfordCoreNLP(props);
   }
 

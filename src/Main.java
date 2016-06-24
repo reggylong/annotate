@@ -22,13 +22,14 @@ public class Main {
   public static final String dataset = "release/crawl";
   public static final String inputPath = "inputs";
   public static final String outputPath = "outputs";
-  public static int nGroups = 9;
-  public static final int nWorkers = 20;
+  public static final String failedPath = "failed";
+  public static int nGroups = 10;
+  public static final int nWorkers = 24;
   public static int group = 0;
   public static final AtomicInteger count = new AtomicInteger(0);
   public static final AtomicInteger failed = new AtomicInteger(0);
   public static final AtomicInteger malformed = new AtomicInteger(0);
-  public static int timeout = 60;
+  public static int timeout = 30;
   public static long startTime; 
 
 
@@ -79,12 +80,15 @@ public class Main {
     File dir = new File(outputPath);
     dir.mkdir();
 
+    File failedDir = new File(failedPath);
+    failedDir.mkdir();
+
     ExecutorService scheduler = Executors.newFixedThreadPool(nWorkers);
 
     ExecutorService pool = Executors.newFixedThreadPool(nWorkers);
 
     PrintWriter w = new PrintWriter(Utils.initOut(outputPath, group));
-
+    PrintWriter failedW = new PrintWriter(Utils.initOut(failedPath, group));
     BlockingQueue<Pair<String, Annotation>> annotations = new LinkedBlockingQueue<>();
     Thread writer = new Thread(new AnnotationWriter(annotations, w));
     writer.start();
@@ -94,8 +98,11 @@ public class Main {
 
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
-      Runnable runner = new Annotator(pipeline, annotations, obj);
-      scheduler.submit(new TimeoutRunner(pool, runner, timeout));
+      try {
+        String id = obj.getInt("articleId") + ""; 
+        Runnable runner = new Annotator(pipeline, annotations, obj);
+        scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
+      } catch (Exception e) { Utils.printError(e); }
     }
 
     scheduler.shutdown();
@@ -115,5 +122,6 @@ public class Main {
       Utils.printError(e);
     }
     IOUtils.closeIgnoringExceptions(w);
+    IOUtils.closeIgnoringExceptions(failedW);
   }
 }

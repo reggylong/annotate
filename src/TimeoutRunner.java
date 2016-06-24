@@ -11,9 +11,13 @@ class TimeoutRunner implements Runnable {
   ExecutorService pool;
   Runnable runner;
   long timeoutSeconds;
+  String id;
+  PrintWriter logger;
 
-  TimeoutRunner(ExecutorService pool, Runnable runner, long timeoutSeconds) {
+  TimeoutRunner(ExecutorService pool, String id, PrintWriter logger, Runnable runner, long timeoutSeconds) {
     this.pool = pool;
+    this.id = id;
+    this.logger = logger;
     this.runner = runner;
     this.timeoutSeconds = timeoutSeconds;
   }
@@ -29,16 +33,19 @@ class TimeoutRunner implements Runnable {
     } catch (InterruptedException e) {
       System.err.println("TimeoutRunner: interrupted");
       endTask(future);
+      logFailed();
     } catch (ExecutionException e) {
       int failed = Main.failed.incrementAndGet();
       System.err.println("Thread: " + runner + " threw an exception");
       Utils.printFailed(failed);
       endTask(future);
+      logFailed();
     } catch (TimeoutException e) {
       int failed = Main.failed.incrementAndGet();
       System.err.println("Thread: " + runner + " timed out");
       Utils.printFailed(failed);
       endTask(future);
+      logFailed();
     }
     int examined = Main.count.incrementAndGet();
     printExamined(examined);
@@ -48,6 +55,11 @@ class TimeoutRunner implements Runnable {
     if (failed % 10 == 0) {
       System.out.println(failed + " number of executions have failed.");
     }
+  }
+
+  private synchronized void logFailed() {
+    logger.println(id);
+    logger.flush();
   }
 
   private void printExamined(int examined) {
