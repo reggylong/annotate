@@ -24,7 +24,7 @@ public class Main {
   public static final String outputPath = "outputs";
   public static final String failedPath = "failed";
   public static int nGroups = 10;
-  public static final int nWorkers = 24;
+  public static final int nWorkers = 28;
   public static int group = 0;
   public static final AtomicInteger count = new AtomicInteger(0);
   public static final AtomicInteger failed = new AtomicInteger(0);
