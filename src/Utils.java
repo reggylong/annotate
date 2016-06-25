@@ -96,29 +96,29 @@ public class Utils {
     }
     File dir = new File(workerInput);
     dir.mkdir();
+
+    List<PrintWriter> inputWriters = new ArrayList<>();
     for (int i = 0; i < nGroups; i++) {
       PrintWriter w = null;
       try {
-        w = new PrintWriter("inputs/" + i + ".in");
+        inputWriters.add(new PrintWriter("inputs/" + i + ".in"));
       } catch (Exception e) { Utils.exit(e); }
-
-      for (int j = 0; j < total / nGroups; j++) {
-        try {
-          w.println(in.readLine());
-        } catch (IOException e) { Utils.printError(e); }
-      }
-      String line = null;
-      if (i == nGroups - 1) {
-        while (true) {
-          try {
-            line = in.readLine();
-          } catch (IOException e) { Utils.printError(e); }
-          if (line == null) break;
-          w.println(line);
-        }
-      }
-      w.close();
     }
+
+    long i = 0;
+    String line = null;
+    while (true) {
+      try {
+        line = in.readLine();
+      } catch (IOException e) { Utils.printError(e); }
+      if (line == null) break;
+      inputWriters.get((int) i % (inputWriters.size())).println(line);
+      i++;
+    }
+    for (int j = 0; j < nGroups; i++) {
+      inputWriters.get(j).close();
+    }
+
     try {
       in.close();
     } catch (IOException e) { Utils.printError(e); }
