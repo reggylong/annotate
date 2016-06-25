@@ -77,6 +77,9 @@ public class Main {
   int id = object.getInt("articleId");*/
 
   private static void processAnnotations(int group) {
+    System.out.println("Determining lines of work");
+    int lines = Utils.countLines(inputPath + "/" + group + ".in");
+    System.out.println(lines + " examples");
     File dir = new File(outputPath);
     dir.mkdir();
 
@@ -112,7 +115,7 @@ public class Main {
 
     pool.shutdown(); 
     try {
-      scheduler.awaitTermination(7, TimeUnit.DAYS); 
+      pool.awaitTermination(7, TimeUnit.DAYS); 
     } catch (InterruptedException e) {}
 
     writer.interrupt();
