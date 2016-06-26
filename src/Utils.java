@@ -174,9 +174,12 @@ public class Utils {
 
   }
 
+  public static String getElapsed() {
+    return "[" + TimeUnit.NANOSECONDS.toMinutes(System.nanoTime() - Main.startTime) + " min(s) elapsed]";
+  }
   public static void printFailed(int failed) {
     if (failed % 10 == 0) {
-      System.out.println(failed + " number of executions have failed.");
+      System.out.println(getElapsed() + failed + " number of executions have failed.");
     }
   }
 

@@ -64,9 +64,7 @@ class TimeoutRunner implements Runnable {
 
   private void printExamined(int examined) {
     if (examined % 10 == 0) {
-      long diffTime = System.nanoTime() - Main.startTime;
-      System.out.println("[" + TimeUnit.NANOSECONDS.toMinutes(diffTime) +
-          " min(s) elapsed]" +
+      System.out.println(Utils.getElapsed() +
           + examined + " examined");
     }
   }

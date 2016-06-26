@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.*;
 
 import java.util.concurrent.*;
-import java.util.concurrent.locks.*;
+import java.util.concurrent.atomic.*;
 import java.lang.*;
 
 import edu.stanford.nlp.hcoref.data.CorefChain;
@@ -21,6 +21,8 @@ class AnnotationWriter implements Runnable {
   private final StanfordCoreNLP pipeline;
   private final BlockingQueue<Pair<String, Annotation>> annotations;
   private final PrintWriter writer;
+  private long count = 0;
+  
 
   AnnotationWriter(BlockingQueue<Pair<String,Annotation>> annotations, PrintWriter writer) {
     this.annotations = annotations; 
@@ -44,6 +46,10 @@ class AnnotationWriter implements Runnable {
         Utils.printError(e);
       }
       writer.println();
+      count++;
+      if (count % 10 == 0) {
+        System.out.println(Utils.getElapsed() + count + " number of written examples");
+      }
         
     }
   }
