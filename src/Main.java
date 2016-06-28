@@ -21,7 +21,7 @@ public class Main {
 
   public static final String dataset = "release/crawl";
   public static final String inputPath = "inputs";
-  public static final String outputPath = "outputs";
+  public static String outputPath;
   public static final String failedPath = "failed";
   public static int nGroups = 10;
   public static final int nWorkers = 28;
@@ -31,15 +31,19 @@ public class Main {
   public static final AtomicInteger malformed = new AtomicInteger(0);
   public static int timeout = 30;
   public static long startTime; 
-
+  public static final Pair<String, Annotation> POISON_PILL = new Pair<>("", new Annotation(""));
 
   public static void main(String[] args) throws IOException {
     startTime = System.nanoTime();
     if (args.length > 0) {
       group = Integer.parseInt(args[0]);
     }
+    outputPath = "/" + Utils.hostname() + "/scr1/reglong";
+    File dir = new File(outputPath);
+    dir.mkdirs();
     redirect(); 
 
+    System.out.println(Utils.hostname());
     System.out.println("Determining size of dataset");
     int lines = Utils.countLines(dataset);
 
@@ -111,14 +115,16 @@ public class Main {
     scheduler.shutdown();
     try {
       scheduler.awaitTermination(7, TimeUnit.DAYS); 
-    } catch (InterruptedException e) {}
+    } catch (InterruptedException e) { Utils.printError(e); }
 
     pool.shutdown(); 
     try {
       pool.awaitTermination(7, TimeUnit.DAYS); 
-    } catch (InterruptedException e) {}
-
-    writer.interrupt();
+    } catch (InterruptedException e) { Utils.printError(e); }
+    
+    try {
+      annotations.put(POISON_PILL);
+    } catch (InterruptedException e) { Utils.printError(e); }
     try {
       writer.join();
     } catch (InterruptedException e) { 

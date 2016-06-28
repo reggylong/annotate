@@ -20,8 +20,8 @@ public class Utils {
 
   public static StanfordCoreNLP initPipeline() {
     Properties props = new Properties();
-    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
-    props.setProperty("dcoref.maxdist", "2");
+    props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref, natlog, openie");
+    props.setProperty("dcoref.maxdist", "3");
     props.setProperty("parse.model", "resources/edu/stanford/nlp/models/srparser/englishSR.ser.gz");
     return new StanfordCoreNLP(props);
   }

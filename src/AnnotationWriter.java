@@ -39,6 +39,7 @@ class AnnotationWriter implements Runnable {
         Utils.printError(e);
         continue;
       }
+      if (annotation == Main.POISON_PILL) return;
       try {
         writer.println(annotation.first);
         pipeline.jsonPrint(annotation.second, writer);
