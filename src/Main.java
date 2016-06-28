@@ -29,7 +29,7 @@ public class Main {
   public static final AtomicInteger count = new AtomicInteger(0);
   public static final AtomicInteger failed = new AtomicInteger(0);
   public static final AtomicInteger malformed = new AtomicInteger(0);
-  public static int timeout = 20;
+  public static int timeout = 30;
   public static long startTime; 
 
 
