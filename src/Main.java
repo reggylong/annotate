@@ -32,7 +32,7 @@ public class Main {
   public static int timeout = 30;
   public static long startTime; 
   public static final Pair<String, Annotation> POISON_PILL = new Pair<>("", new Annotation(""));
-  public static final int MAX_BACKLOG = 2000;
+  public static final int MAX_BACKLOG = 1000;
   public static final Semaphore backlog = new Semaphore(MAX_BACKLOG);
 
   public static void main(String[] args) throws IOException {
