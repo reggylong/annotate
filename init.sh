@@ -1,5 +1,6 @@
 #!/bin/bash
 
+:'
 mkdir classes &&
 mkdir resources &&
 wget http://nlp.stanford.edu/software/stanford-corenlp-full-2015-12-09.zip &&
@@ -19,6 +20,13 @@ done
 wget http://nlp.stanford.edu/software/stanford-srparser-2014-10-23-models.jar
 cd .. 
 
+mkdir finished
+
 # website seems to be down
 wget http://www.cs.washington.edu/ai/clzhang/release.tar.gz &&
 tar zxvf release.tar.gz
+
+
+wget http://reverb.cs.washington.edu/reverb-latest.jar && mkdir Reverb && mv reverb-latest.jar Reverb && jar xf Reverb/reverb-latest.jar
+
+'
