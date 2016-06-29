@@ -37,6 +37,7 @@ class AnnotationWriter implements Runnable {
         annotation = annotations.take();
       } catch (InterruptedException e) {
         Utils.printError(e);
+        Main.backlog.release();
         continue;
       }
       if (annotation == Main.POISON_PILL) return;
@@ -47,11 +48,12 @@ class AnnotationWriter implements Runnable {
         Utils.printError(e);
       }
       writer.println();
+      writer.println();
       count++;
       if (count % 10 == 0) {
         System.out.println(Utils.getElapsed() + count + " number of written examples");
       }
-        
+      Main.backlog.release();  
     }
   }
 }

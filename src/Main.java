@@ -32,18 +32,21 @@ public class Main {
   public static int timeout = 30;
   public static long startTime; 
   public static final Pair<String, Annotation> POISON_PILL = new Pair<>("", new Annotation(""));
+  public static final int MAX_BACKLOG = 2000;
+  public static final Semaphore backlog = new Semaphore(MAX_BACKLOG);
 
   public static void main(String[] args) throws IOException {
     startTime = System.nanoTime();
     if (args.length > 0) {
       group = Integer.parseInt(args[0]);
     }
-    outputPath = "/" + Utils.hostname() + "/scr1/reglong";
+    outputPath = "/" + Utils.hostname() + "/scr1/reglong/annotations_output";
     File dir = new File(outputPath);
     dir.mkdirs();
     redirect(); 
 
     System.out.println(Utils.hostname());
+    System.out.println(Utils.getDate());
     System.out.println("Determining size of dataset");
     int lines = Utils.countLines(dataset);
 

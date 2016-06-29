@@ -15,6 +15,7 @@ import javax.json.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 import java.lang.*;
+import java.text.*;
 
 public class Utils {
 
@@ -22,9 +23,15 @@ public class Utils {
     Properties props = new Properties();
     props.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref ");
     props.setProperty("dcoref.maxdist", "3");
-    props.setProperty("parse.model", "resources/edu/stanford/nlp/models/srparser/englishSR.ser.gz");
+    props.setProperty("parse.model", "CoreNLP/edu/stanford/nlp/models/srparser/englishSR.ser.gz");
     props.setProperty("openie.max_entailments_per_clause", "100");
     return new StanfordCoreNLP(props);
+  }
+
+  public static String getDate() {
+    DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    Date date = new Date();
+    return dateFormat.format(date) + "";
   }
 
   public static StanfordCoreNLP initMiniPipeline() {
