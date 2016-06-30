@@ -32,8 +32,9 @@ public class Main {
   public static int timeout = 30;
   public static long startTime; 
   public static final Pair<String, Annotation> POISON_PILL = new Pair<>("", new Annotation(""));
-  public static final int MAX_BACKLOG = 100;
+  public static final int MAX_BACKLOG = nWorkers;
   public static final Semaphore backlog = new Semaphore(MAX_BACKLOG);
+  public static final int logFrequency = 10;
 
   public static void main(String[] args) throws IOException {
     startTime = System.nanoTime();
@@ -77,11 +78,11 @@ public class Main {
   }
 
   /*
-  String date = object.getJsonString("date").getString();
-  String title = object.getJsonString("title").getString();
-  String url = object.getJsonString("url").getString();
-  String text = object.getJsonString("text").getString();
-  int id = object.getInt("articleId");*/
+     String date = object.getJsonString("date").getString();
+     String title = object.getJsonString("title").getString();
+     String url = object.getJsonString("url").getString();
+     String text = object.getJsonString("text").getString();
+     int id = object.getInt("articleId");*/
 
   private static void processAnnotations(int group) {
     System.out.println("Determining lines of work");
@@ -108,11 +109,23 @@ public class Main {
 
     JsonObject obj = null;
     while ( (obj = Utils.read(in)) != null) {
+      String id = "";
       try {
-        String id = obj.getInt("articleId") + ""; 
-        Runnable runner = new Annotator(pipeline, annotations, obj);
-        scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
-      } catch (Exception e) { Utils.printError(e); }
+        // Check fields exist
+        id = obj.getInt("articleId") + ""; 
+        String text = obj.getString("text");
+        String date = obj.getString("date");
+      } catch (Exception e) { 
+        Utils.printError(e); 
+        int malformedCount = malformed.incrementAndGet();
+        if (malformedCount % logFrequency == 0) {
+          System.out.println(malformedCount + " number of malformed examples");
+        }
+        continue;
+      }
+      Runnable runner = new Annotator(pipeline, annotations, obj);
+      scheduler.submit(new TimeoutRunner(pool, id, failedW, runner, timeout));
+
     }
 
     scheduler.shutdown();
@@ -124,7 +137,7 @@ public class Main {
     try {
       pool.awaitTermination(7, TimeUnit.DAYS); 
     } catch (InterruptedException e) { Utils.printError(e); }
-    
+
     try {
       annotations.put(POISON_PILL);
     } catch (InterruptedException e) { Utils.printError(e); }

@@ -31,20 +31,14 @@ class Annotator implements Runnable {
 
   public void run() {
     Annotation annotation = null;
-    if (obj.getJsonString("text") != null && obj.getJsonString("date") != null) {
-      annotation = new Annotation(obj.getString("text"));
-      pipeline.annotate(annotation);
-      try {
-        annotations.put(new Pair<>(obj.getInt("articleId") + " " + obj.getString("date"),annotation));
-      } catch (InterruptedException e) {
-        int failed = Main.failed.incrementAndGet();
-        Utils.printFailed(failed);
-      }
-    } else {
-      int malformed = Main.malformed.incrementAndGet();
-      if (malformed % 10 == 0) {
-        System.out.println(malformed + " number of malformed examples");
-      }
+    annotation = new Annotation(obj.getString("text"));
+    pipeline.annotate(annotation);
+    try {
+      annotations.put(new Pair<>(obj.getInt("articleId") + " " + obj.getString("date"),annotation));
+    } catch (InterruptedException e) {
+      int failed = Main.failed.incrementAndGet();
+      Utils.printFailed(failed);
+      Main.backlog.release();
     }
   }
 }
