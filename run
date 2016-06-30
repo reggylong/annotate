@@ -1,9 +1,10 @@
 #!/bin/sh
 
-array=(john0 john1 john2 john3 john4 john5 john6 john7 john10 john11)
+array=(john0 john1 john2 john3 john4 john5 john6 john7 john11)
 comm="java -cp resources:classes Main"
 
 for i in "${!array[@]}"; do
+  echo "${array[$i]}" 'cd entities;'"java -cp CoreNLP:classes Main $i" 
   ssh "${array[$i]}" 'cd entities;'"java -cp CoreNLP:classes Main $i" &
 done
 

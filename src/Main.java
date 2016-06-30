@@ -23,7 +23,7 @@ public class Main {
   public static final String inputPath = "inputs";
   public static String outputPath;
   public static final String failedPath = "failed";
-  public static int nGroups = 10;
+  public static int nGroups = 9;
   public static final int nWorkers = 28;
   public static int group = 0;
   public static final AtomicInteger count = new AtomicInteger(0);
@@ -32,7 +32,7 @@ public class Main {
   public static int timeout = 30;
   public static long startTime; 
   public static final Pair<String, Annotation> POISON_PILL = new Pair<>("", new Annotation(""));
-  public static final int MAX_BACKLOG = 1000;
+  public static final int MAX_BACKLOG = 100;
   public static final Semaphore backlog = new Semaphore(MAX_BACKLOG);
 
   public static void main(String[] args) throws IOException {
@@ -62,9 +62,9 @@ public class Main {
   }
 
   private static void redirect() {
-    String logPath = "logs";
+    String logPath = "/" + Utils.hostname() + "/scr1/reglong/annotations_logs";
     File dir = new File(logPath);
-    dir.mkdir();
+    dir.mkdirs();
 
     try {
       PrintStream out = new PrintStream(new FileOutputStream(logPath + "/" + group + ".out"));

@@ -1,6 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
-rm -rf failed/*
-rm -rf inputs/*
-rm -rf outputs/*
-
+rm -rf /john*/scr1/reglong/annotations_output/*
