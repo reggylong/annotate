@@ -1,0 +1,6 @@
+
+producer/consumer for writing data to move i/o wait times to single thread
+Use thread pool to distribute work
+Use thread pool to time the runs (prevent runs from taking up too much time)
+distribute disk writes to each computer's own local disk instead of to the same disk
+Use semaphore to wait for writer to catch up (otherwise will take up too much memory)
